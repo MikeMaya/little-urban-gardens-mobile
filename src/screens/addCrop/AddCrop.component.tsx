@@ -5,34 +5,48 @@ import {Avatar, Text, ViewPager} from '@ui-kitten/components';
 import General from './General.component';
 import Cares from './Cares.component';
 import Configuration from './Configuration.component';
+import Fertilize from '../../constants/Fertilize';
+import Watering from '../../constants/Watering';
+import CropStatus from '../../constants/CropStatus';
+import CropPhase from '../../constants/CropPhase';
+import { useNavigation } from '@react-navigation/native';
+import { storeData, getData } from '../../store';
 
 const newCrop = {
   type: '',
-  name: '',
-  status: '',
-  phase: '',
-  plantDate: new Date(),
+  name: 'Mi nueva planta',
+  status: CropStatus.HEALTHY,
+  phase: CropPhase.PLANTED,
+  plantDate: null,
   harvestDate: null,
-  watering: 1,
+  watering: Watering.DAILY,
   lastWatering: null,
-  fertilize: 15,
+  fertilize: Fertilize.NONE,
   lastFertilize: null,
+  tasks: {
+    watering: true,
+    fertilize: true
+  }
 };
 
 const titles = ['Información General', 'Cuidados', 'Configuración'];
 
 function AddCrop() {
+  const navigation = useNavigation();
   const [crop, setCrop] = useState(newCrop);
   const [pageIdx, setPageIdx] = useState(0);
 
-  const register = () => {
-    console.log('Crop registered');
+  const register = async () => {
+    const crops = await getData('crops') || [];
+    crops.push(crop); 
+    await storeData('crops', crops);
+    navigation.navigate('Crops');
   };
 
   const title = titles[pageIdx];
 
   return (
-    <SafeAreaView style={{flex: 1}}>
+    <SafeAreaView style={{flex: 1, paddingTop: 25}}>
       <View style={styles.avatarContainer}>
         <Text style={styles.header} status="primary" category="h1">
           {title}
@@ -52,8 +66,16 @@ function AddCrop() {
           setCrop={setCrop}
           nextSection={() => setPageIdx(1)}
         />
-        <Cares register={register} checkNotif={() => setPageIdx(1)} />
-        <Configuration />
+        <Cares
+          crop={crop}
+          setCrop={setCrop}
+          checkNotif={() => setPageIdx(2)} 
+        />
+        <Configuration 
+          crop={crop}
+          setCrop={setCrop}
+          register={register}
+        />
       </ViewPager>
     </SafeAreaView>
   );
